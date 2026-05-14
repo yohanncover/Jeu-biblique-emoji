@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Générateur PDF depuis texte</title>
+  <style>
+    :root {
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: #1f2937;
+      background: #f8fafc;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+    .card {
+      width: min(900px, 100%);
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgb(15 23 42 / 0.1);
+      padding: 1.5rem;
+    }
+    h1 { margin-top: 0; }
+    p { color: #475569; }
+    textarea {
+      width: 100%;
+      min-height: 320px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      padding: 0.9rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      box-sizing: border-box;
+    }
+    .row {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    input {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      min-width: 260px;
+    }
+    button {
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    .hint { font-size: 0.9rem; color: #64748b; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Créer un PDF à partir d'un texte copié-collé</h1>
+    <p>Collez vos mots ou votre texte ci-dessous, puis cliquez sur le bouton pour générer un fichier PDF.</p>
+
+    <label for="content">Votre texte :</label>
+    <textarea id="content" placeholder="Collez votre texte ici..."></textarea>
+
+    <div class="row">
+      <label for="filename">Nom du fichier :</label>
+      <input id="filename" value="document" />
+      <button id="generate">Générer le PDF</button>
+    </div>
+
+    <p class="hint">Le texte sera automatiquement découpé sur plusieurs lignes et pages si nécessaire.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script>
+    const button = document.getElementById('generate');
+    const textarea = document.getElementById('content');
+    const filenameInput = document.getElementById('filename');
+
+    button.addEventListener('click', () => {
+      const text = textarea.value.trim();
+
+      if (!text) {
+        alert('Veuillez coller du texte avant de générer le PDF.');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+      const margin = 48;
+      const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
+      const maxHeight = doc.internal.pageSize.getHeight() - margin * 2;
+      const lineHeight = 18;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+
+      const lines = doc.splitTextToSize(text, maxWidth);
+      let y = margin;
+
+      lines.forEach((line) => {
+        if (y + lineHeight > margin + maxHeight) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += lineHeight;
+      });
+
+      const name = (filenameInput.value || 'document').trim().replace(/\s+/g, '_');
+      doc.save(`${name}.pdf`);
+    });
+  </script>
+</body>
+</html>
